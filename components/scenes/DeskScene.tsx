@@ -6,7 +6,7 @@ import { NameModel } from "./NameModel";
 import { IntroductionModel } from "./IntroductionModel";
 import * as THREE from "three";
 import { RectAreaLightHelper } from 'three/addons/helpers/RectAreaLightHelper.js'
-import { clamp, degToRad } from "three/src/math/MathUtils.js";
+import { degToRad } from "three/src/math/MathUtils.js";
 
 interface DeskSceneProps {
   scrollPages: number;
@@ -35,7 +35,7 @@ const DeskScene = ({ scrollPages }: DeskSceneProps) => {
 
     if (progressRef.current) {
       camPos.lerpVectors(
-        new THREE.Vector3(5, 3, 13),
+        new THREE.Vector3(5, 3.7, 13),
         new THREE.Vector3(15, 1, 0.65),
         scroll.range(0, 1 / scroll.pages)
       )
@@ -61,7 +61,7 @@ const DeskScene = ({ scrollPages }: DeskSceneProps) => {
     await new Promise<void>((resolve) => setTimeout(resolve, 1000));
 
     controls.smoothTime = 0.6;
-    await controls.setLookAt(5, 3, 13, 0, 0, -2, true);
+    await controls.setLookAt(5, 3.7, 13, 0, 0, -2, true);
   };
 
   useEffect(() => {

@@ -28,7 +28,7 @@ export function IntroductionModel({
       if (progressRef.current) {
         let start = new THREE.Vector3(1, getPosY(i), 6)
         let end = new THREE.Vector3(1, getPosY(i), 2.1)
-        const t = scroll.range((i / count) * maxPageOffset + maxPageOffset, maxPageOffset / count);
+        const t = scroll.range((i / count) * maxPageOffset + (maxPageOffset - (maxPageOffset * 0.3)), maxPageOffset / count);
         console.log("[ " + i + " ] " + ((i / count) * maxPageOffset + maxPageOffset))
         text.position.lerpVectors(start, end, t);
       }
