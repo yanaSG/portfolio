@@ -1,8 +1,11 @@
-import { useGLTF, useTexture } from "@react-three/drei";
+"use client";
+
+import { useGLTF, useScroll, useTexture } from "@react-three/drei";
 import * as THREE from "three";
 import type { GLTF } from "three/examples/jsm/loaders/GLTFLoader.js";
-import { type ThreeElements } from "@react-three/fiber";
-import { RectAreaLightUniformsLib } from "three/examples/jsm/lights/RectAreaLightUniformsLib.js"; 
+import { useFrame, type ThreeElements } from "@react-three/fiber";
+import { RectAreaLightUniformsLib } from "three/examples/jsm/lights/RectAreaLightUniformsLib.js";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 
 type GLTFResult = GLTF & {
   nodes: {
@@ -36,10 +39,12 @@ type GLTFResult = GLTF & {
 
 export function DeskModel(props: ThreeElements["group"]) {
   const { nodes, materials } = useGLTF('/desk-model/baked-setup.glb') as unknown as GLTFResult
+  const groundMaterial = useRef<THREE.MeshStandardMaterial>(null!);
 
   const bakedTextures = {
     chair: useTexture("/desk-model/BakeL_Chair.png"),
-    ground: useTexture("/desk-model/BakeL_Ground.png"),
+    ground: useTexture("/desk-model/BakeL_Ground_00.png"),
+    ground_01: useTexture("/desk-model/BakeL_Ground_01.png"),
     keyboard: useTexture("/desk-model/BakeL_Keyboard.png"),
     laptop: useTexture("/desk-model/BakeL_Laptop.png"),
     monitor: useTexture("/desk-model/BakeL_Monitor.png"),
@@ -53,7 +58,28 @@ export function DeskModel(props: ThreeElements["group"]) {
       texture.flipY = false;
     });
   }
-  
+
+  const scroll = useScroll();
+
+  useLayoutEffect(() => {
+    Object.values(bakedTextures).forEach((texture) => {
+      texture.colorSpace = THREE.NoColorSpace;
+      texture.flipY = false;
+    });
+  }, [bakedTextures]);
+
+  useFrame(() => {
+    const next =
+      scroll.offset >= 1.6 / scroll.pages
+        ? bakedTextures.ground_01
+        : bakedTextures.ground;
+
+    if (groundMaterial.current.map !== next) {
+      groundMaterial.current.map = next;
+      groundMaterial.current.needsUpdate = true;
+    }
+  });
+
   initBakedTextures();
 
   RectAreaLightUniformsLib.init();
@@ -64,9 +90,7 @@ export function DeskModel(props: ThreeElements["group"]) {
         geometry={nodes.Circle.geometry}
         material={materials.Material}
       >
-        <meshStandardMaterial
-          map={bakedTextures.ground}
-        />
+        <meshStandardMaterial ref={groundMaterial} map={bakedTextures.ground} />
       </mesh>
       <mesh
         geometry={nodes.Cube003.geometry}

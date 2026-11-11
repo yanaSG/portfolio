@@ -6,27 +6,6 @@ import * as TYPE from '@/utils/types/NameModel'
 
 const PATH_SAMPLES = 128;
 
-function makeLPath(type: "name" | "role") {
-    const path = new THREE.CurvePath<THREE.Vector3>()
-    let yPos = 0.45;
-    // if (type == "name") yPos += 0.1;
-
-    path.add(new THREE.LineCurve3(
-        new THREE.Vector3(0.5, yPos, -0.5),
-        new THREE.Vector3(0, yPos, -0.5)
-    ))
-    path.add(new THREE.QuadraticBezierCurve3(
-        new THREE.Vector3(0, yPos, -0.5),
-        new THREE.Vector3(-1, yPos, -0.5),
-        new THREE.Vector3(-1, yPos, 0)
-    ))
-    path.add(new THREE.LineCurve3(
-        new THREE.Vector3(-1, yPos, 0),
-        new THREE.Vector3(-1, yPos, 5)
-    ))
-    return path
-}
-
 export function NameModel({
     texts,
     progressRef,
@@ -42,18 +21,26 @@ export function NameModel({
     const shaderRefs = useRef<{ uniforms: TYPE.BendUniforms }[]>([]);
     const boundsRefs = useRef<[number, number, number, number][]>([]);
 
-    const paths = useMemo(
-        () => [
-            makeLPath("name"),
-            makeLPath("role"),
-        ],
-        []
-    );
+    const path = new THREE.CurvePath<THREE.Vector3>()
+    let yPos = 0.45;
+
+    path.add(new THREE.LineCurve3(
+        new THREE.Vector3(0.5, yPos, -0.5),
+        new THREE.Vector3(0, yPos, -0.5)
+    ))
+    path.add(new THREE.QuadraticBezierCurve3(
+        new THREE.Vector3(0, yPos, -0.5),
+        new THREE.Vector3(-1, yPos, -0.5),
+        new THREE.Vector3(-1, yPos, 0)
+    ))
+    path.add(new THREE.LineCurve3(
+        new THREE.Vector3(-1, yPos, 0),
+        new THREE.Vector3(-1, yPos, 5)
+    ))
 
     // Sample the path once (evenly spaced by arc length) so the shader can look it up
     const pathData = useMemo(() => {
-        return paths.map((path) => {
-            const pts = path.getSpacedPoints(PATH_SAMPLES - 1);
+        const pts = path.getSpacedPoints(PATH_SAMPLES - 1);
 
             const tans = pts.map((_, i) =>
                 path
@@ -67,8 +54,7 @@ export function NameModel({
                 tans,
                 length: path.getLength(),
             };
-        });
-    }, [paths]);
+    }, [path]);
 
     const materials = minScales.map((minScale, i) => useMemo(() => {
         const mat = new THREE.MeshBasicMaterial();
@@ -82,9 +68,9 @@ export function NameModel({
             shader.uniforms.uWaveWidth = { value: waveWidth };
             shader.uniforms.uLift = { value: lift };
             shader.uniforms.uDir = { value: flip ? -1 : 1 };
-            shader.uniforms.uPathLength = { value: pathData[i].length };
-            shader.uniforms.uPts = { value: pathData[i].pts };
-            shader.uniforms.uTans = { value: pathData[i].tans };
+            shader.uniforms.uPathLength = { value: pathData.length };
+            shader.uniforms.uPts = { value: pathData.pts };
+            shader.uniforms.uTans = { value: pathData.tans };
 
             shaderRefs.current[i] = shader as unknown as { uniforms: TYPE.BendUniforms };
 

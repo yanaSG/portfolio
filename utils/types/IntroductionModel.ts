@@ -21,3 +21,12 @@ export interface TroikaTextRenderInfo {
 export interface TroikaTextMesh extends THREE.Mesh {
     textRenderInfo?: TroikaTextRenderInfo;
 }
+
+export interface BendUniforms {
+    uProgress: { value: number };
+    uCenterX: { value: number };
+    uDir: { value: number };
+    uTextHalfWidth: { value: number };
+    uPathBlend: { value: number };
+    uObjectPosition: { value: THREE.Vector3 };
+}

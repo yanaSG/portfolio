@@ -1,18 +1,14 @@
 import React, { useRef, useEffect } from "react";
-import { PerspectiveCamera, useHelper, CameraControls, useScroll } from "@react-three/drei";
+import { useHelper, CameraControls, useScroll } from "@react-three/drei";
 import { useFrame, useThree } from '@react-three/fiber';
 import { DeskModel } from "./DeskModel";
 import { NameModel } from "./NameModel";
 import { IntroductionModel } from "./IntroductionModel";
 import * as THREE from "three";
 import { RectAreaLightHelper } from 'three/addons/helpers/RectAreaLightHelper.js'
-import { degToRad } from "three/src/math/MathUtils.js";
+import { useCameraControls } from "@/hooks/useCameraControls";
 
-interface DeskSceneProps {
-  scrollPages: number;
-}
-
-const DeskScene = ({ scrollPages }: DeskSceneProps) => {
+const DeskScene = () => {
   const spotlightRef = useRef<THREE.SpotLight>(null!)
   const arealightRef = useRef<THREE.RectAreaLight>(null!)
 
@@ -32,6 +28,8 @@ const DeskScene = ({ scrollPages }: DeskSceneProps) => {
 
   useFrame(() => {
     progressRef.current = scroll.offset;
+    const TRANSITION_START = 1.6 / scroll.pages;
+    const TRANSITION_END = 2 / scroll.pages;
 
     if (progressRef.current) {
       camPos.lerpVectors(
@@ -52,9 +50,42 @@ const DeskScene = ({ scrollPages }: DeskSceneProps) => {
         false
       )
     }
+
+    const pathProgress = THREE.MathUtils.clamp(
+      (progressRef.current - TRANSITION_START) /
+      (TRANSITION_END - TRANSITION_START),
+      0,
+      1
+    );
+
+    // Moving camera to page 3 transition
+    if (pathProgress > 0) {
+      // camPos.lerpVectors(
+      //   new THREE.Vector3(15, 1, 0.65),
+      //   new THREE.Vector3(1.472, 0.8, 13),
+      //   pathProgress
+      // )
+      camPos.lerpVectors(
+        new THREE.Vector3(15, 1, 0.65),
+        new THREE.Vector3(4, 15, 13),
+        pathProgress
+      )
+
+      camTarget.lerpVectors(
+        new THREE.Vector3(0, 0.5, 0.65),
+        new THREE.Vector3(1.472, 0.5, -2.136),
+        pathProgress
+      )
+
+      controls.setLookAt(
+        camPos.x, camPos.y, camPos.z,
+        camTarget.x, camTarget.y, camTarget.z,
+        false
+      )
+    }
   })
 
-  const controls = useThree((state) => state.controls) as CameraControls;
+  const controls = useCameraControls();
 
   const animate = async (): Promise<void> => {
     controls.setLookAt(8, 8, 8, 0, 0.25, 0, false);
@@ -73,15 +104,6 @@ const DeskScene = ({ scrollPages }: DeskSceneProps) => {
 
   return (
     <>
-      <PerspectiveCamera fov={6} near={0.1} far={10000} makeDefault position={[5, 2.5, 8]} />
-      <CameraControls
-        makeDefault
-        maxDistance={100} // was 8: with fov=6 the camera sits ~50 units away, and it got clamped to 8
-        minDistance={1}
-        mouseButtons-wheel={0} // 0 = ACTION.NONE, so the wheel scrolls the page (ScrollControls) instead of zooming
-        minPolarAngle={0}
-        maxPolarAngle={degToRad(80)}
-      />  
       <rectAreaLight
         ref={arealightRef}
         color={0xffffff}
@@ -95,7 +117,7 @@ const DeskScene = ({ scrollPages }: DeskSceneProps) => {
         ref={spotlightRef}
         position={[0, 1.5, 0]}
         target-position={[0, 0, 0]}
-        angle={1}
+        angle={0.7}
         distance={10}
         decay={2}
         penumbra={0.5}
